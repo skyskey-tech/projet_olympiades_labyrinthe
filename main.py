@@ -2,6 +2,7 @@ from random import randint, sample
 import sys
 from copy import deepcopy
 sys.setrecursionlimit(10000)
+#import timon
 
 class cell:
     def __init__(self, x, y, type):
@@ -24,6 +25,7 @@ class labyrinth:
         self.grille = [[cell(x, y, 'WALL') for x in range(width)] for y in range(height)]
         self.generate_laby(0,0)
         self.grille[0][0].type, self.grille[height-1][width-1].type = ('START','FINISH')
+        self.modele = deepcopy(self.grille)
         self.shuffle_laby(self.nbShuffles)
 
     def __str__(self):
@@ -42,25 +44,34 @@ class labyrinth:
                     self.grille[posY + delta_chosen[1]//2][posX + delta_chosen[0]//2].type = 'PATH'
                     self.generate_laby(posX+delta_chosen[0], posY+delta_chosen[1])
 
-    def move_row_column(self, row_column, x, y):
-        if row_column == 'R':
-            if x==self.width-1:
-                a = self.grille[y][x]
-                b = self.grille[y][:x-1]
+    #index de 1 à width ou height
+    def move_direction(self, direction, index):
+        if direction == 'R':
+            if index<0:
+                x = -index-1
+                row = self.grille[x][1:]+[self.grille[x][0]]
+                self.grille[x] = row
             else:
-                a = self.grille[y][x]
-                b = self.grille[y][x+1:]
+                x = index-1
+                row = [self.grille[x][-1]] + self.grille[x][:-1]
+                self.grille[x] = row
+            for x_new, obj in enumerate(row):
+                print(obj, x_new)
+                obj.x = x_new
         else:
-            pass
+            pass 
         return 
-
+        
     def shuffle_laby(self, nbShuffles):
         movements = ['R','C']
         last_done = None
         for _ in range(nbShuffles):
-            self.move_row_column(sample(movements, 1), randint(self.width), randint(self.height))
-            last_done = 
-
+            direction = sample(['R', 'C'], 1)[0]
+            if direction == 'R':
+                index = randint(1, self.height)
+            else:
+                index = randint(1, self.width)            
+            self.move_direction(direction, index)
 
     #ne pas oublier de faire un deepcopy avant d'appeler la fonction
     def verificate_path(self, lig, col):
@@ -84,3 +95,5 @@ class labyrinth:
 
 essai = labyrinth(21, 21, 3)
 print(essai)
+essai.move_direction('R',-21)
+print(f'\n\n{essai}')
