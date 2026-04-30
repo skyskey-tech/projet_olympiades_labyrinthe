@@ -27,6 +27,8 @@ class labyrinth:
         self.grille[0][0].type, self.grille[height-1][width-1].type = ('START','FINISH')
         self.model = deepcopy(self.grille) #ne pas toucher le modele ! Il servira pour la réinitialisation
         self.shuffle_laby(self.nbShuffles)
+        while deepcopy(self).verificate_path(0,0)>0:
+            self.shuffle_laby(self.nbShuffles)
 
     def __str__(self):
         return '\n'.join([''.join([repr(i) for i in j]) for j in self.grille])
@@ -79,14 +81,17 @@ class labyrinth:
         
     def shuffle_laby(self, nbShuffles):
         movements = ['R','C']
-        last_done = None
+        forbidden = None #pour éviter d'annuler un mouvement
         for _ in range(nbShuffles):
             direction = sample(['R', 'C'], 1)[0]
             if direction == 'R':
                 index = randint(1, self.height)
             else:
                 index = randint(1, self.width)
+            if index == forbidden:
+                index = -index
             self.move_direction(direction, index)
+            forbidden = -index
 
     #ne pas oublier de faire un deepcopy avant d'appeler la fonction
     def verificate_path(self, lig, col):
