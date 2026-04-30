@@ -25,7 +25,7 @@ class labyrinth:
         self.grille = [[cell(x, y, 'WALL') for x in range(width)] for y in range(height)]
         self.generate_laby(0,0)
         self.grille[0][0].type, self.grille[height-1][width-1].type = ('START','FINISH')
-        self.modele = deepcopy(self.grille)
+        self.model = deepcopy(self.grille) #ne pas toucher le modele ! Il servira pour la réinitialisation
         self.shuffle_laby(self.nbShuffles)
 
     def __str__(self):
@@ -56,11 +56,26 @@ class labyrinth:
                 row = [self.grille[x][-1]] + self.grille[x][:-1]
                 self.grille[x] = row
             for x_new, obj in enumerate(row):
-                print(obj, x_new)
                 obj.x = x_new
-        else:
-            pass 
-        return 
+        elif direction=='C':
+            column = []
+            if index<0:
+                y = -index-1
+                for row in self.grille:
+                    column.append(row[y])
+                column = column[1:]+[column[0]]
+            else:
+                y = index-1
+                for row in self.grille:
+                    column.append(row[y])
+                column = [column[-1]] + column[:-1]
+
+            for i, row in enumerate(self.grille):
+                row[y] = column[i]
+                
+            for y_new, obj in enumerate(column):
+                obj.y = y_new
+        return
         
     def shuffle_laby(self, nbShuffles):
         movements = ['R','C']
@@ -70,7 +85,7 @@ class labyrinth:
             if direction == 'R':
                 index = randint(1, self.height)
             else:
-                index = randint(1, self.width)            
+                index = randint(1, self.width)
             self.move_direction(direction, index)
 
     #ne pas oublier de faire un deepcopy avant d'appeler la fonction
@@ -93,7 +108,7 @@ class labyrinth:
     def verificate_all_connected(self):
         pass
 
-essai = labyrinth(21, 21, 3)
+essai = labyrinth(11, 11, 4)
 print(essai)
-essai.move_direction('R',-21)
-print(f'\n\n{essai}')
+print('\n'*5)
+print(essai.model)
