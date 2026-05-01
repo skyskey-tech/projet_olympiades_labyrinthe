@@ -2,7 +2,7 @@ from random import randint, sample
 import sys
 from copy import deepcopy
 sys.setrecursionlimit(10000)
-#import timon
+import timon
 from lib_pattern import pattern, patterns
 
 symbols = {'PATH':'.', 'WALL':'#', 'DRAWING':'%', 'START':'S','FINISH':'F', 'VISITED':'o'}
@@ -159,3 +159,4 @@ lancer_partie(9,9,2)
 
 essai = labyrinth(31, 31, 10)
 print(essai)
+timon.save_image(essai, r'C:\Users\Eleve\labyrinthe.png') 
