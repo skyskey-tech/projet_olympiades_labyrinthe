@@ -25,12 +25,12 @@ class labyrinth:
         self.width = width
         self.nbShuffles = level
         self.grille = [[cell(x, y, 'WALL') for x in range(width)] for y in range(height)]
-        if level>=10 and randint(0,2)==0:
+        if level>=0 and randint(0,2)==0:
             self.add_pattern()  
         self.generate_laby(0,0)
         self.grille[0][0].type, self.grille[height-1][width-1].type = ('START','FINISH')
         self.shuffle_laby(self.nbShuffles)
-        while deepcopy(self).verificate_path(0,0)>0:
+        while level>0 and deepcopy(self).verificate_path(0,0)>0:
             self.shuffle_laby(self.nbShuffles)
         self.model = deepcopy(self.grille) #ne pas toucher le modele ! Il servira pour la réinitialisation
 
@@ -38,7 +38,7 @@ class labyrinth:
         return '\n'.join([''.join([repr(i) for i in j]) for j in self.grille])
 
     def add_pattern(self):
-        max_size = min(self.width-7, self.height-7)
+        max_size = min(self.width-10, self.height-10)
         usable_patterns = [drawing for drawing in patterns if drawing.size<=max_size]
         if usable_patterns:
             pattern_chosen = sample(usable_patterns, 1)[0]
@@ -56,7 +56,7 @@ class labyrinth:
         if (posX,posY)==(self.width-1, self.height-1):
             return
         deltas = [(2,0),(-2,0),(0,2),(0,-2)]
-        unvisited = [delta for delta in deltas if 0<=posY+delta[1]<self.height and 0<=posX+delta[0]<self.width and self.grille[posY+delta[1]][posX+delta[0]].type=='WALL']
+        unvisited = [delta for delta in deltas if 0<=posY+delta[1]<self.height and 0<=posX+delta[0]<self.width and self.grille[posY+delta[1]][posX+delta[0]].type=='WALL' and self.grille[posY+delta[1]//2][posX+delta[0]//2].type!='DRAWING']
         if unvisited:
             unvisited_chosen = sample(unvisited, randint(1,len(unvisited)))
             for delta_chosen in unvisited_chosen:
@@ -66,35 +66,36 @@ class labyrinth:
 
     #index de 1 à width ou height
     def move_direction(self, direction, index):
-        if direction == 'R':
-            if index<0:
-                x = -index
-                row = self.grille[x][1:]+[self.grille[x][0]]
-                self.grille[x] = row
-            else:
-                x = index
-                row = [self.grille[x][-1]] + self.grille[x][:-1]
-                self.grille[x] = row
-            for x_new, obj in enumerate(row):
-                obj.x = x_new
-        elif direction=='C':
-            column = []
-            if index<0:
-                y = -index
-                for row in self.grille:
-                    column.append(row[y])
-                column = column[1:]+[column[0]]
-            else:
-                y = index
-                for row in self.grille:
-                    column.append(row[y])
-                column = [column[-1]] + column[:-1]
+        for _ in range(2):
+            if direction == 'R':
+                if index<0:
+                    x = -index
+                    row = self.grille[x][1:]+[self.grille[x][0]]
+                    self.grille[x] = row
+                else:
+                    x = index
+                    row = [self.grille[x][-1]] + self.grille[x][:-1]
+                    self.grille[x] = row
+                for x_new, obj in enumerate(row):
+                    obj.x = x_new
+            elif direction=='C':
+                column = []
+                if index<0:
+                    y = -index
+                    for row in self.grille:
+                        column.append(row[y])
+                    column = column[1:]+[column[0]]
+                else:
+                    y = index
+                    for row in self.grille:
+                        column.append(row[y])
+                    column = [column[-1]] + column[:-1]
 
-            for i, row in enumerate(self.grille):
-                row[y] = column[i]
-                
-            for y_new, obj in enumerate(column):
-                obj.y = y_new
+                for i, row in enumerate(self.grille):
+                    row[y] = column[i]
+                    
+                for y_new, obj in enumerate(column):
+                    obj.y = y_new
         return
         
     def shuffle_laby(self, nbShuffles):
@@ -110,6 +111,7 @@ class labyrinth:
                 index = -index
             self.move_direction(direction, index)
             forbidden = -index
+        return
 
     #ne pas oublier de faire un deepcopy avant d'appeler la fonction
     def verificate_path(self, lig=0, col=0):
@@ -157,6 +159,6 @@ def lancer_partie(height:int,width:int,level:int):
 lancer_partie(9,9,2)
 '''
 
-essai = labyrinth(31, 31, 10)
+essai = labyrinth(31, 31, 3)
 print(essai)
 timon.save_image(essai, 'labyrinthe.png') 
