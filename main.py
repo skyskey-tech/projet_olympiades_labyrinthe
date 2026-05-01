@@ -5,7 +5,7 @@ sys.setrecursionlimit(10000)
 #import timon
 
 class cell:
-    def __init__(self, x, y, type):
+    def __init__(self, x:int, y:int, type:str):
         self.x = x
         self.y = y
         self.type = type
@@ -18,17 +18,17 @@ class cell:
         return f'({self.x};{self.y}):{self.type}'
 
 class labyrinth:
-    def __init__(self, height, width, level):
+    def __init__(self, height:int, width:int, level:int):
         self.height = height
         self.width = width
         self.nbShuffles = level
         self.grille = [[cell(x, y, 'WALL') for x in range(width)] for y in range(height)]
         self.generate_laby(0,0)
         self.grille[0][0].type, self.grille[height-1][width-1].type = ('START','FINISH')
-        self.model = deepcopy(self.grille) #ne pas toucher le modele ! Il servira pour la réinitialisation
         self.shuffle_laby(self.nbShuffles)
         while deepcopy(self).verificate_path(0,0)>0:
             self.shuffle_laby(self.nbShuffles)
+        self.model = deepcopy(self.grille) #ne pas toucher le modele ! Il servira pour la réinitialisation
 
     def __str__(self):
         return '\n'.join([''.join([repr(i) for i in j]) for j in self.grille])
@@ -50,11 +50,11 @@ class labyrinth:
     def move_direction(self, direction, index):
         if direction == 'R':
             if index<0:
-                x = -index-1
+                x = -index
                 row = self.grille[x][1:]+[self.grille[x][0]]
                 self.grille[x] = row
             else:
-                x = index-1
+                x = index
                 row = [self.grille[x][-1]] + self.grille[x][:-1]
                 self.grille[x] = row
             for x_new, obj in enumerate(row):
@@ -62,12 +62,12 @@ class labyrinth:
         elif direction=='C':
             column = []
             if index<0:
-                y = -index-1
+                y = -index
                 for row in self.grille:
                     column.append(row[y])
                 column = column[1:]+[column[0]]
             else:
-                y = index-1
+                y = index
                 for row in self.grille:
                     column.append(row[y])
                 column = [column[-1]] + column[:-1]
@@ -85,16 +85,16 @@ class labyrinth:
         for _ in range(nbShuffles):
             direction = sample(['R', 'C'], 1)[0]
             if direction == 'R':
-                index = randint(1, self.height)
+                index = randint(1, self.height-2)
             else:
-                index = randint(1, self.width)
+                index = randint(1, self.width-2)
             if index == forbidden:
                 index = -index
             self.move_direction(direction, index)
             forbidden = -index
 
     #ne pas oublier de faire un deepcopy avant d'appeler la fonction
-    def verificate_path(self, lig, col):
+    def verificate_path(self, lig=0, col=0):
         delta = [(-1,0),(1,0),(0,-1),(0,1)]
 
         self.grille[lig][col] = 'o'
@@ -113,7 +113,27 @@ class labyrinth:
     def verificate_all_connected(self):
         pass
 
-essai = labyrinth(11, 11, 4)
-print(essai)
-print('\n'*5)
-print(essai.model)
+'''
+def lancer_partie(height:int,width:int,level:int):
+    essai = labyrinth(height, width, level)
+    print(essai)
+    nb = 0
+    while nb <essai.nbShuffles:
+        print(f'il reste : {essai.nbShuffles} essai(s)')
+        command = sys.stdin.readline().split()
+        if command[0] == 'S':
+            print('Vous avez arrêté la partie.')
+            return
+        if command[0]=='Re':
+            nb=-1
+            essai.grille = essai.model
+        else:
+            essai.move_direction(command[0], int(command[1]))
+            print(essai)
+        
+        if essai.verificate_path()>0:
+            print('Vous avez réussi !')
+        nb+= 1
+
+lancer_partie(9,9,2)
+'''
