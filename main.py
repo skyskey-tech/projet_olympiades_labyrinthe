@@ -38,7 +38,7 @@ class labyrinth:
         return '\n'.join([''.join([repr(i) for i in j]) for j in self.grille])
 
     def add_pattern(self):
-        max_size = min(self.width-12, self.height-12)
+        max_size = min(self.width-7, self.height-7)
         usable_patterns = [drawing for drawing in patterns if drawing.size<=max_size]
         if usable_patterns:
             pattern_chosen = sample(usable_patterns, 1)[0]
@@ -120,7 +120,7 @@ class labyrinth:
         for dx,dy in delta:
             x = lig + dx
             y = col + dy
-            if 0<=x<self.width and 0<=y<self.height:
+            if 0<=x<self.height and 0<=y<self.width:
                 case = self.grille[x][y]
                 if case.type == 'FINISH':
                     nbChemins += 1
