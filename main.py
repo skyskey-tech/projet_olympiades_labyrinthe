@@ -3,6 +3,9 @@ import sys
 from copy import deepcopy
 sys.setrecursionlimit(10000)
 #import timon
+from lib_pattern import pattern, patterns
+
+symbols = {'PATH':'.', 'WALL':'#', 'DRAWING':'%', 'START':'S','FINISH':'F', 'VISITED':'o'}
 
 class cell:
     def __init__(self, x:int, y:int, type:str):
@@ -11,7 +14,6 @@ class cell:
         self.type = type
 
     def __repr__(self):
-        symbols = {'PATH':'.', 'WALL':'#', 'BLOCK':'%', 'START':'S','FINISH':'F'}
         return symbols[self.type]
     
     def __str__(self):
@@ -23,6 +25,8 @@ class labyrinth:
         self.width = width
         self.nbShuffles = level
         self.grille = [[cell(x, y, 'WALL') for x in range(width)] for y in range(height)]
+        if level>=10 and randint(0,2)==0:
+            self.add_pattern()  
         self.generate_laby(0,0)
         self.grille[0][0].type, self.grille[height-1][width-1].type = ('START','FINISH')
         self.shuffle_laby(self.nbShuffles)
@@ -32,6 +36,20 @@ class labyrinth:
 
     def __str__(self):
         return '\n'.join([''.join([repr(i) for i in j]) for j in self.grille])
+
+    def add_pattern(self):
+        max_size = min(self.width-12, self.height-12)
+        usable_patterns = [drawing for drawing in patterns if drawing.size<=max_size]
+        if usable_patterns:
+            pattern_chosen = sample(usable_patterns, 1)[0]
+            x_corner = randint(1, self.width-2-pattern_chosen.size)
+            y_corner = randint(1, self.height-2-pattern_chosen.size)
+            symbols_inversed = {'#':'WALL', '%':'DRAWING'}
+            for y, i in enumerate(pattern_chosen.drawing):
+                for x, j in enumerate(i):
+                    self.grille[y_corner+y][x_corner+x].type = symbols_inversed[j]
+        return
+
 
     def generate_laby(self, posX, posY):
         self.grille[posY][posX].type = 'PATH'
@@ -97,17 +115,18 @@ class labyrinth:
     def verificate_path(self, lig=0, col=0):
         delta = [(-1,0),(1,0),(0,-1),(0,1)]
 
-        self.grille[lig][col] = 'o'
+        self.grille[lig][col].type = 'VISITED'
         nbChemins = 0
         for dx,dy in delta:
             x = lig + dx
             y = col + dy
-            case = self.grille[x][y]
-            if case.type == 'S':
-                nbChemins += 1
-            elif case.type == '.':
-                nbChemins += self.verificate_path(x,y)
-        self.grille[lig][col] = '.'
+            if 0<=x<self.width and 0<=y<self.height:
+                case = self.grille[x][y]
+                if case.type == 'FINISH':
+                    nbChemins += 1
+                elif case.type == 'PATH':
+                    nbChemins += self.verificate_path(x,y)
+        self.grille[lig][col].type = 'PATH'
         return nbChemins
 
     def verificate_all_connected(self):
@@ -137,3 +156,6 @@ def lancer_partie(height:int,width:int,level:int):
 
 lancer_partie(9,9,2)
 '''
+
+essai = labyrinth(31, 31, 10)
+print(essai)
