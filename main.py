@@ -159,4 +159,4 @@ lancer_partie(9,9,2)
 
 essai = labyrinth(31, 31, 10)
 print(essai)
-timon.save_image(essai, r'C:\Users\Eleve\labyrinthe.png') 
+timon.save_image(essai, 'labyrinthe.png') 
