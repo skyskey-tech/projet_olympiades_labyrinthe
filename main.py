@@ -25,7 +25,7 @@ class labyrinth:
         self.width = width
         self.nbShuffles = level
         self.grille = [[cell(x, y, 'WALL') for x in range(width)] for y in range(height)]
-        if level>=0 and randint(0,2)==0:
+        if level>=10 and randint(0,2)==0:
             self.add_pattern()  
         self.generate_laby(0,0)
         self.grille[0][0].type, self.grille[height-1][width-1].type = ('START','FINISH')
@@ -42,8 +42,8 @@ class labyrinth:
         usable_patterns = [drawing for drawing in patterns if drawing.size<=max_size]
         if usable_patterns:
             pattern_chosen = sample(usable_patterns, 1)[0]
-            x_corner = randint(1, self.width-2-pattern_chosen.size)
-            y_corner = randint(1, self.height-2-pattern_chosen.size)
+            x_corner = randint(1, max(2,self.width-2-pattern_chosen.size))
+            y_corner = randint(1, max(2, self.height-2-pattern_chosen.size))
             symbols_inversed = {'#':'WALL', '%':'DRAWING'}
             for y, i in enumerate(pattern_chosen.drawing):
                 for x, j in enumerate(i):
@@ -158,5 +158,5 @@ def lancer_partie(height:int,width:int,level:int):
 
 lancer_partie(9,9,2)
 '''
-essai = labyrinth(31, 31, 3)
+essai = labyrinth(25, 25, 1)
 timon.launch_game(essai)
