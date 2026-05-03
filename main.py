@@ -158,7 +158,5 @@ def lancer_partie(height:int,width:int,level:int):
 
 lancer_partie(9,9,2)
 '''
-
-essai = labyrinth(31, 31, 10)
-print(essai)
-timon.save_image(essai, 'labyrinthe.png') 
+essai = labyrinth(31, 31, 3)
+timon.launch_game(essai)
