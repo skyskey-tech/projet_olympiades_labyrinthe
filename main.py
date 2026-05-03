@@ -160,5 +160,4 @@ lancer_partie(9,9,2)
 '''
 
 essai = labyrinth(31, 31, 3)
-print(essai)
-timon.save_image(essai, 'labyrinthe.png') 
+timon.launch_game(essai)
