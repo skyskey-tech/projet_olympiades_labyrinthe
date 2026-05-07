@@ -1,8 +1,9 @@
 from PIL import Image, ImageTk
 import tkinter as tk
-from tkinter import ttk
 from copy import deepcopy
-COLORS = {
+
+# ── Palette ────────────────────────────────────────────────────────────────────
+PIL_COLORS = {
     'PATH':    (240, 230, 210),
     'WALL':    ( 40,  40,  40),
     'DRAWING': ( 80, 120, 180),
@@ -10,112 +11,267 @@ COLORS = {
     'FINISH':  (220,  80,  80),
     'VISITED': (180, 160, 230),
 }
+BG        = '#1a1a2e'
+ARROW_FG  = '#e94560'
+ARROW_HOV = '#ff8fa3'
 
-def cell_to_image(cell, cell_size: int = 20) -> Image.Image:
-    color = COLORS.get(cell.type, (255, 0, 255))
-    return Image.new('RGB', (cell_size, cell_size), color)
 
-def laby_to_image(laby, cell_size: int = 20) -> Image.Image:
-    canvas = Image.new('RGB', (laby.width * cell_size, laby.height * cell_size))
+# ── Utilitaires image ──────────────────────────────────────────────────────────
+def laby_to_image(laby, cell_size=20):
+    img = Image.new('RGB', (laby.width * cell_size, laby.height * cell_size))
     for row in laby.grille:
         for c in row:
-            canvas.paste(cell_to_image(c, cell_size), (c.x * cell_size, c.y * cell_size))
-    return canvas
+            color = PIL_COLORS.get(c.type, (255, 0, 255))
+            img.paste(Image.new('RGB', (cell_size, cell_size), color),
+                      (c.x * cell_size, c.y * cell_size))
+    return img
 
-def save_image(laby, path: str, cell_size: int = 20):
+def save_image(laby, path, cell_size=20):
     laby_to_image(laby, cell_size).save(path)
     print(f'Image sauvegardée : {path}')
 
+
+# ── Menu de démarrage ──────────────────────────────────────────────────────────
+def launch_menu(LabyClass):
+    """Affiche un menu pour choisir taille et difficulté, puis lance le jeu."""
+    menu = tk.Tk()
+    menu.title("Labyrinthe – Nouveau jeu")
+    menu.configure(bg=BG)
+    menu.resizable(False, False)
+
+    def lbl(parent, text, size=11, bold=False, color='#e0e0e0'):
+        return tk.Label(parent, text=text,
+                        font=('Courier', size, 'bold' if bold else 'normal'),
+                        fg=color, bg=BG)
+
+    def slider_row(parent, row, text, from_, to, init):
+        lbl(parent, text).grid(row=row, column=0, sticky='w', padx=(0, 16), pady=6)
+        var = tk.IntVar(value=init)
+        val_lbl = lbl(parent, str(init), bold=True, color=ARROW_FG)
+        val_lbl.grid(row=row, column=2, padx=(8, 0))
+
+        def update(v): val_lbl.config(text=v)
+
+        tk.Scale(parent, from_=from_, to=to, orient='horizontal',
+                 variable=var, showvalue=False, command=update,
+                 length=280, sliderlength=18,
+                 bg=BG, fg=ARROW_FG, activebackground=ARROW_HOV,
+                 troughcolor='#16213e', highlightthickness=0, bd=0
+                 ).grid(row=row, column=1)
+        return var
+
+    frame = tk.Frame(menu, bg=BG, padx=30, pady=24)
+    frame.pack()
+
+    lbl(frame, "L A B Y R I N T H E", size=20, bold=True,
+        color=ARROW_FG).grid(row=0, column=0, columnspan=3, pady=(0, 24))
+
+    lbl(frame, "Taille", size=12, bold=True,
+        color='#a0c4ff').grid(row=1, column=0, columnspan=3, sticky='w', pady=(0, 2))
+    size_var = slider_row(frame, 2, "Largeur / Hauteur", 11, 101, 31)
+
+    lbl(frame, "Difficulté", size=12, bold=True,
+        color='#a0c4ff').grid(row=3, column=0, columnspan=3, sticky='w', pady=(14, 2))
+    diff_var = slider_row(frame, 4, "Nombre de shuffles", 0, 60, 10)
+
+    def get_size():
+        v = size_var.get()
+        return v if v % 2 == 1 else v - 1   # le générateur a besoin d'un nombre impair
+
+    def start():
+        sz   = get_size()
+        diff = diff_var.get()
+        menu.destroy()
+        laby = LabyClass(sz, sz, diff)
+        launch_game(laby)
+
+    tk.Button(frame, text="  Jouer  →  ", command=start,
+              font=('Courier', 13, 'bold'),
+              bg=ARROW_FG, fg='white',
+              activebackground=ARROW_HOV, activeforeground='white',
+              relief='flat', bd=0, padx=20, pady=10,
+              cursor='hand2').grid(row=5, column=0, columnspan=3, pady=(24, 0))
+
+    menu.update_idletasks()
+    menu.minsize(menu.winfo_reqwidth(), menu.winfo_reqheight())
+    menu.mainloop()
+
+
+# ── Jeu ────────────────────────────────────────────────────────────────────────
 def launch_game(laby):
     root = tk.Tk()
     root.title("Labyrinthe")
+    root.configure(bg=BG)
 
-    # Calcul dynamique de la taille des cellules selon l'écran
     screen_w = root.winfo_screenwidth()
     screen_h = root.winfo_screenheight()
-    max_cell_w = (screen_w - 100) // laby.width
-    max_cell_h = (screen_h - 350) // laby.height
-    CELL_SIZE = max(4, min(max_cell_w, max_cell_h))
 
-    # --- LE CONTENEUR UNIQUE ---
-    # On met tout dans main_frame. C'est lui qui dictera sa taille à root.
-    main_frame = tk.Frame(root)
-    main_frame.pack(padx=10, pady=10, expand=True, fill="both")
+    # Taille de cellule : on réserve de la place pour les flèches et l'UI
+    # UI_H couvre : titre + pattern + compteur + message + boutons + paddings + barre de tâches + chrome fenêtre
+    UI_H      = 280
+    ARROW_EST = 24
+    avail_w   = screen_w - 80  - 2 * ARROW_EST
+    avail_h   = screen_h - UI_H - 2 * ARROW_EST
+    CELL      = max(4, min(avail_w // laby.width, avail_h // laby.height))
+    AZ        = max(CELL + 8, 22)   # Arrow Zone : au moins une cellule + marge
 
-    # Canvas (enfant de main_frame)
-    canvas = tk.Canvas(main_frame, width=laby.width * CELL_SIZE, height=laby.height * CELL_SIZE)
-    canvas.grid(row=0, column=0, columnspan=4, pady=10)
+    maze_pw  = laby.width  * CELL
+    maze_ph  = laby.height * CELL
+    cv_w     = maze_pw + 2 * AZ
+    cv_h     = maze_ph + 2 * AZ
 
-    photo = None  
+    # ── Layout ──────────────────────────────────────────────────────────────
+    wrap = tk.Frame(root, bg=BG)
+    wrap.pack(padx=12, pady=10)
 
-    def draw():
-        nonlocal photo
-        img = laby_to_image(laby, CELL_SIZE)
-        photo = ImageTk.PhotoImage(img)
-        canvas.create_image(0, 0, anchor='nw', image=photo)
+    tk.Label(wrap, text="L A B Y R I N T H E",
+             font=('Courier', 14, 'bold'), fg=ARROW_FG, bg=BG).pack(pady=(0, 2))
 
-    # --- CONTRÔLES (enfant de main_frame) ---
-    frame_controls = tk.Frame(main_frame)
-    frame_controls.grid(row=1, column=0, columnspan=4, pady=(0, 10))
+    if laby.pattern_chosen:
+        tk.Label(wrap,
+                 text=f"✦  Motif cible : {laby.pattern_chosen.name.upper()}  ✦",
+                 font=('Courier', 9), fg='#a0c4ff', bg=BG).pack(pady=(0, 4))
 
-    tk.Label(frame_controls, text="Direction :").grid(row=0, column=0, padx=5)
-    direction_var = tk.StringVar(value='R')
-    tk.Radiobutton(frame_controls, text="Ligne (R)", variable=direction_var, value='R').grid(row=0, column=1)
-    tk.Radiobutton(frame_controls, text="Colonne (C)", variable=direction_var, value='C').grid(row=0, column=2)
+    # Canvas unique contenant labyrinthe + zones flèches
+    canvas = tk.Canvas(wrap, width=cv_w, height=cv_h,
+                       bg=BG, highlightthickness=2,
+                       highlightbackground=ARROW_FG)
+    canvas.pack()
 
-    tk.Label(frame_controls, text="Index :").grid(row=0, column=3, padx=5)
-    index_var = tk.IntVar(value=1)
-    # Note : Correction de la borne du spinbox
-    spinbox = tk.Spinbox(frame_controls, from_=1, to=max(laby.width, laby.height)-2, textvariable=index_var, width=5)
-    spinbox.grid(row=0, column=4, padx=5)
-    
-    tk.Label(frame_controls, text="Sens :").grid(row=0, column=5, padx=5)
-    sens_var = tk.StringVar(value='positif')
-    tk.Radiobutton(frame_controls, text="→ / ↓", variable=sens_var, value='positif').grid(row=0, column=6)
-    tk.Radiobutton(frame_controls, text="← / ↑", variable=sens_var, value='negatif').grid(row=0, column=7)
+    photo = [None]
 
-    # --- SCORE ET MESSAGES (enfants de main_frame) ---
+    # ── Dessin du labyrinthe ─────────────────────────────────────────────────
+    def draw_maze():
+        img = laby_to_image(laby, CELL)
+        photo[0] = ImageTk.PhotoImage(img)
+        canvas.create_image(AZ, AZ, anchor='nw', image=photo[0], tags='maze')
+
+    # ── Flèches (polygones Canvas → alignement pixel parfait) ────────────────
+    def draw_arrows():
+        canvas.delete('arrow', 'hl')
+        s = max(3, AZ * 2 // 5)   # demi-taille du triangle
+
+        for col in range(1, laby.width - 1):
+            # Centre X de la colonne col, exprimé en coordonnées canvas
+            cx = AZ + col * CELL + CELL // 2
+
+            # Flèche ▲ (haut → déplace vers le haut, index négatif)
+            cy = AZ // 2
+            tup = f'cup{col}'
+            canvas.create_polygon(cx, cy - s, cx - s, cy + s, cx + s, cy + s,
+                                  fill=ARROW_FG, outline='', tags=('arrow', tup))
+            _bind(tup, 'C', -col, 'col', col)
+
+            # Flèche ▼ (bas → déplace vers le bas, index positif)
+            cy = maze_ph + AZ + AZ // 2
+            tdn = f'cdn{col}'
+            canvas.create_polygon(cx, cy + s, cx - s, cy - s, cx + s, cy - s,
+                                  fill=ARROW_FG, outline='', tags=('arrow', tdn))
+            _bind(tdn, 'C', col, 'col', col)
+
+        for row in range(1, laby.height - 1):
+            # Centre Y de la ligne row
+            cy = AZ + row * CELL + CELL // 2
+
+            # Flèche ◀ (gauche → index négatif)
+            cx = AZ // 2
+            tlt = f'rlt{row}'
+            canvas.create_polygon(cx - s, cy, cx + s, cy - s, cx + s, cy + s,
+                                  fill=ARROW_FG, outline='', tags=('arrow', tlt))
+            _bind(tlt, 'R', -row, 'row', row)
+
+            # Flèche ▶ (droite → index positif)
+            cx = maze_pw + AZ + AZ // 2
+            trt = f'rrt{row}'
+            canvas.create_polygon(cx + s, cy, cx - s, cy - s, cx - s, cy + s,
+                                  fill=ARROW_FG, outline='', tags=('arrow', trt))
+            _bind(trt, 'R', row, 'row', row)
+
+    def _bind(tag, direction, index, axis, idx):
+        canvas.tag_bind(tag, '<Button-1>',
+                        lambda e, d=direction, i=index: do_move(d, i))
+        canvas.tag_bind(tag, '<Enter>',
+                        lambda e, t=tag, ax=axis, ix=idx: _on_enter(t, ax, ix))
+        canvas.tag_bind(tag, '<Leave>',
+                        lambda e, t=tag: _on_leave(t))
+
+    def _on_enter(tag, axis, idx):
+        """Survol : colore la flèche et surligne la ligne/colonne concernée."""
+        canvas.itemconfigure(tag, fill=ARROW_HOV)
+        canvas.delete('hl')
+        if axis == 'col':
+            x0, y0 = AZ + idx * CELL, AZ
+            x1, y1 = x0 + CELL, y0 + maze_ph
+        else:
+            x0, y0 = AZ, AZ + idx * CELL
+            x1, y1 = x0 + maze_pw, y0 + CELL
+        canvas.create_rectangle(x0, y0, x1, y1,
+                                fill='#e94560', stipple='gray25',
+                                outline='', tags='hl')
+        canvas.tag_raise('arrow')
+
+    def _on_leave(tag):
+        canvas.itemconfigure(tag, fill=ARROW_FG)
+        canvas.delete('hl')
+
+    # ── Logique de jeu ───────────────────────────────────────────────────────
     moves_left = tk.IntVar(value=laby.nbShuffles)
-    tk.Label(main_frame, textvariable=moves_left, font=('Arial', 14)).grid(row=2, column=0, columnspan=2)
-    tk.Label(main_frame, text="mouvements restants", font=('Arial', 14)).grid(row=2, column=2, columnspan=2)
+    msg_var    = tk.StringVar()
 
-    if laby.pattern_chosen is not None:
-        tk.Label(main_frame, text="Visez", font=('Arial', 14)).grid(row=3, column=0, columnspan=2)
-        tk.Label(main_frame, text=laby.pattern_chosen.name, font=('Arial', 14)).grid(row=3, column=2, columnspan=2)
-
-
-    msg_var = tk.StringVar()
-    tk.Label(main_frame, textvariable=msg_var, font=('Arial', 14), fg='green').grid(row=3, column=0, columnspan=4)
-
-    # --- BOUTONS (enfants de main_frame) ---
-    btn_frame = tk.Frame(main_frame)
-    btn_frame.grid(row=4, column=0, columnspan=4, pady=10)
-
-    def on_move():
-        if moves_left.get() <= 0: return
-        direction = direction_var.get()
-        index = index_var.get()
-        if sens_var.get() == 'negatif': index = -index
+    def do_move(direction, index):
+        if moves_left.get() <= 0:
+            return
         laby.move_direction(direction, index)
         moves_left.set(moves_left.get() - 1)
-        draw()
+        canvas.delete('maze')
+        draw_maze()
+        canvas.delete('hl')
+        canvas.tag_raise('arrow')
         if deepcopy(laby).verificate_path(0, 0) > 0:
-            msg_var.set("Bravo, vous avez gagné !")
+            msg_var.set("✦  Bravo, vous avez gagné !  ✦")
+
+    # ── UI inférieure ────────────────────────────────────────────────────────
+    info = tk.Frame(wrap, bg=BG)
+    info.pack(pady=6)
+    tk.Label(info, textvariable=moves_left,
+             font=('Courier', 18, 'bold'), fg=ARROW_FG, bg=BG).pack(side='left', padx=3)
+    tk.Label(info, text=' mouvements restants',
+             font=('Courier', 11), fg='#e0e0e0', bg=BG).pack(side='left')
+
+    tk.Label(wrap, textvariable=msg_var,
+             font=('Courier', 12, 'bold'), fg='#80ff80', bg=BG).pack()
+
+    btns = tk.Frame(wrap, bg=BG)
+    btns.pack(pady=(4, 8))
+
+    def mk_btn(text, cmd):
+        b = tk.Button(btns, text=text, command=cmd,
+                      font=('Courier', 10, 'bold'),
+                      bg='#16213e', fg='#e0e0e0',
+                      activebackground=ARROW_FG, activeforeground='white',
+                      relief='flat', bd=0, padx=14, pady=6, cursor='hand2')
+        b.pack(side='left', padx=8)
+        b.bind('<Enter>', lambda e: b.configure(bg=ARROW_FG, fg='white'))
+        b.bind('<Leave>', lambda e: b.configure(bg='#16213e', fg='#e0e0e0'))
 
     def on_reset():
         laby.grille = deepcopy(laby.model)
         moves_left.set(laby.nbShuffles)
         msg_var.set("")
-        draw()
+        canvas.delete('maze')
+        draw_maze()
+        canvas.delete('hl')
+        canvas.tag_raise('arrow')
 
-    tk.Button(btn_frame, text="Déplacer", command=on_move, width=12).pack(side='left', padx=10)
-    tk.Button(btn_frame, text="Réinitialiser", command=on_reset, width=12).pack(side='left', padx=10)
+    mk_btn("↺  Réinitialiser", on_reset)
+    mk_btn("✕  Quitter", root.destroy)
 
-    draw()
-    
-    # Force le calcul de la taille réelle par Tkinter
+    draw_maze()
+    draw_arrows()
+
     root.update_idletasks()
-    # Empêche la fenêtre de devenir plus petite que nécessaire
-    root.minsize(root.winfo_reqwidth(), root.winfo_reqheight())
-    
+    w = min(root.winfo_reqwidth(),  screen_w - 20)
+    h = min(root.winfo_reqheight(), screen_h - 60)
+    root.minsize(w, h)
+    root.maxsize(screen_w - 20, screen_h - 60)
     root.mainloop()
