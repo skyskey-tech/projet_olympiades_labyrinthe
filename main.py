@@ -25,7 +25,7 @@ class labyrinth:
         self.width = width
         self.nbShuffles = level
         self.grille = [[cell(x, y, 'WALL') for x in range(width)] for y in range(height)]
-        if level>=10 and randint(0,2)==0:
+        if level>=0 and randint(0,2)==0:
             self.add_pattern()  
         self.generate_laby(0,0)
         self.grille[0][0].type, self.grille[height-1][width-1].type = ('START','FINISH')
@@ -134,29 +134,5 @@ class labyrinth:
     def verificate_all_connected(self):
         pass
 
-'''
-def lancer_partie(height:int,width:int,level:int):
-    essai = labyrinth(height, width, level)
-    print(essai)
-    nb = 0
-    while nb <essai.nbShuffles:
-        print(f'il reste : {essai.nbShuffles} essai(s)')
-        command = sys.stdin.readline().split()
-        if command[0] == 'S':
-            print('Vous avez arrêté la partie.')
-            return
-        if command[0]=='Re':
-            nb=-1
-            essai.grille = essai.model
-        else:
-            essai.move_direction(command[0], int(command[1]))
-            print(essai)
-        
-        if essai.verificate_path()>0:
-            print('Vous avez réussi !')
-        nb+= 1
-
-lancer_partie(9,9,2)
-'''
-essai = labyrinth(25, 25, 1)
+essai = labyrinth(31, 31, 10)
 timon.launch_game(essai)
