@@ -25,8 +25,9 @@ class labyrinth:
         self.width = width
         self.nbShuffles = level
         self.grille = [[cell(x, y, 'WALL') for x in range(width)] for y in range(height)]
+        self.pattern_chosen=None
         if level>=0 and randint(0,2)==0:
-            self.add_pattern()  
+            self.pattern_chosen = self.add_pattern()  
         self.generate_laby(0,0)
         self.grille[0][0].type, self.grille[height-1][width-1].type = ('START','FINISH')
         self.shuffle_laby(self.nbShuffles)
@@ -48,7 +49,9 @@ class labyrinth:
             for y, i in enumerate(pattern_chosen.drawing):
                 for x, j in enumerate(i):
                     self.grille[y_corner+y][x_corner+x].type = symbols_inversed[j]
-        return
+            return pattern_chosen
+        else:
+            return None
 
 
     def generate_laby(self, posX, posY):

@@ -79,6 +79,11 @@ def launch_game(laby):
     tk.Label(main_frame, textvariable=moves_left, font=('Arial', 14)).grid(row=2, column=0, columnspan=2)
     tk.Label(main_frame, text="mouvements restants", font=('Arial', 14)).grid(row=2, column=2, columnspan=2)
 
+    if laby.pattern_chosen is not None:
+        tk.Label(main_frame, text="Visez", font=('Arial', 14)).grid(row=3, column=0, columnspan=2)
+        tk.Label(main_frame, text=laby.pattern_chosen.name, font=('Arial', 14)).grid(row=3, column=2, columnspan=2)
+
+
     msg_var = tk.StringVar()
     tk.Label(main_frame, textvariable=msg_var, font=('Arial', 14), fg='green').grid(row=3, column=0, columnspan=4)
 
