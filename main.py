@@ -1,43 +1,46 @@
-from random import randint, sample
 import sys
-from copy import deepcopy
 sys.setrecursionlimit(10000)
+
+from random import randint, sample
+from copy import deepcopy
 import timon
 from lib_pattern import pattern, patterns
 
-symbols = {'PATH':'.', 'WALL':'#', 'DRAWING':'%', 'START':'S','FINISH':'F', 'VISITED':'o'}
+symbols = {'PATH': '.', 'WALL': '#', 'DRAWING': '%', 'START': 'S', 'FINISH': 'F', 'VISITED': 'o'}
+
 
 class cell:
-    def __init__(self, x:int, y:int, type:str):
+    def __init__(self, x: int, y: int, type: str):
         self.x = x
         self.y = y
         self.type = type
 
     def __repr__(self):
         return symbols[self.type]
-    
+
     def __str__(self):
         return f'({self.x};{self.y}):{self.type}'
 
+
 class labyrinth:
-    def __init__(self, height:int, width:int, level:int):
+    def __init__(self, height: int, width: int, level: int):
         self.height = height
         self.width = width
         self.nbShuffles = level
         self.grille = [[cell(x, y, 'WALL') for x in range(width)] for y in range(height)]
-        self.pattern_chosen=None
-        if level>=0 and randint(0,2)==0:
-            self.pattern_chosen = self.add_pattern()  
-        self.generate_laby(0,0)
-        self.grille[0][0].type, self.grille[height-1][width-1].type = ('START','FINISH')
+        self.pattern_chosen = None
+        if level >= 0 and randint(0, 2) == 0:
+            self.pattern_chosen = self.add_pattern()
+        self.generate_laby(0, 0)
+        self.grille[0][0].type, self.grille[height - 1][width - 1].type = ('START', 'FINISH')
         self.shuffle_laby(self.nbShuffles)
-        while level>0 and deepcopy(self).verificate_path(0,0)>0:
+        while level > 0 and deepcopy(self).verificate_path(0, 0) > 0:
             self.shuffle_laby(self.nbShuffles)
         self.model = deepcopy(self.grille) #ne pas toucher le modele ! Il servira pour la réinitialisation
 
     def __str__(self):
         return '\n'.join([''.join([repr(i) for i in j]) for j in self.grille])
-
+      
     def add_pattern(self):
         max_size = min(self.width-10, self.height-10)
         usable_patterns = [drawing for drawing in patterns if drawing.size<=max_size]
@@ -56,8 +59,7 @@ class labyrinth:
             return pattern_chosen
         else:
             return None
-
-
+          
     def generate_laby(self, posX, posY):
         self.grille[posY][posX].type = 'PATH'
         if (posX,posY)==(self.width-1, self.height-1):
@@ -104,7 +106,7 @@ class labyrinth:
                 for y_new, obj in enumerate(column):
                     obj.y = y_new
         return
-        
+
     def shuffle_laby(self, nbShuffles):
         movements = ['R','C']
         forbidden = None #pour éviter d'annuler un mouvement
@@ -119,7 +121,6 @@ class labyrinth:
             self.move_direction(direction, index)
             forbidden = -index
         return
-
     #ne pas oublier de faire un deepcopy avant d'appeler la fonction
     def verificate_path(self, lig=0, col=0):
         delta = [(-1,0),(1,0),(0,-1),(0,1)]
@@ -141,5 +142,7 @@ class labyrinth:
     def verificate_all_connected(self):
         pass
 
-essai = labyrinth(31, 31, 10)
-timon.launch_game(essai)
+
+
+# Lance le menu → le joueur choisit taille et difficulté
+timon.launch_menu(labyrinth)
