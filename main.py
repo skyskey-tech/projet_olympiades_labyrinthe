@@ -29,6 +29,7 @@ class labyrinth:
         self.nbShuffles = level
         self.grille = [[cell(x, y, 'WALL') for x in range(width)] for y in range(height)]
         self.pattern_chosen = None
+        self.movements = []
         if level >= 0 and randint(0, 2) == 0:
             self.pattern_chosen = self.add_pattern()
         self.generate_laby(0, 0)

@@ -265,6 +265,7 @@ def launch_game(laby, LabyClass):
     def do_move(direction, index):
         if moves_left.get() <= 0:
             return
+        laby.movements.append((direction, index))
         laby.move_direction(direction, index)
         moves_left.set(moves_left.get() - 1)
         canvas.delete('maze')
@@ -313,7 +314,19 @@ def launch_game(laby, LabyClass):
         canvas.delete('hl')
         canvas.tag_raise('arrow')
 
+    def on_cancel():
+        if not laby.movements:
+            return
+        direction, index = laby.movements.pop(-1)
+        laby.move_direction(direction, -index)
+        moves_left.set(moves_left.get() + 1)
+        canvas.delete('maze')
+        draw_maze()
+        canvas.delete('hl')
+        canvas.tag_raise('arrow')
+
     mk_btn("↺  Réinitialiser", on_reset)
+    mk_btn("↶  Annuler", on_cancel)
     mk_btn("✕  Quitter",lambda: [root.destroy(), launch_menu(laby.__class__)])
 
     draw_maze()
