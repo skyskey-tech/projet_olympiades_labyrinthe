@@ -36,90 +36,112 @@ class labyrinth:
         self.shuffle_laby(self.nbShuffles)
         while level > 0 and deepcopy(self).verificate_path(0, 0) > 0:
             self.shuffle_laby(self.nbShuffles)
-        self.model = deepcopy(self.grille)
+        self.model = deepcopy(self.grille) #ne pas toucher le modele ! Il servira pour la réinitialisation
 
     def __str__(self):
         return '\n'.join([''.join([repr(i) for i in j]) for j in self.grille])
-
+      
     def add_pattern(self):
-        max_size = min(self.width - 10, self.height - 10)
-        usable_patterns = [d for d in patterns if d.size <= max_size]
+        max_size = min(self.width-10, self.height-10)
+        usable_patterns = [drawing for drawing in patterns if drawing.size<=max_size]
         if usable_patterns:
-            p = sample(usable_patterns, 1)[0]
-            x_corner = randint(1, max(2, self.width  - 2 - p.size))
-            y_corner = randint(1, max(2, self.height - 2 - p.size))
-            sym_inv = {'#': 'WALL', '%': 'DRAWING'}
-            for y, row in enumerate(p.drawing):
-                for x, ch in enumerate(row):
-                    self.grille[y_corner + y][x_corner + x].type = sym_inv[ch]
-            return p
-        return None
-
+            pattern_chosen = sample(usable_patterns, 1)[0]
+            x_max = self.width - 1 - pattern_chosen.size
+            y_max = self.height - 1 - pattern_chosen.size
+            if x_max < 1 or y_max < 1:
+                return None
+            x_corner = randint(1, x_max)
+            y_corner = randint(1, y_max)
+            symbols_inversed = {'#':'WALL', '%':'DRAWING'}
+            for y, i in enumerate(pattern_chosen.drawing):
+                for x, j in enumerate(i):
+                    self.grille[y_corner+y][x_corner+x].type = symbols_inversed[j]
+            return pattern_chosen
+        else:
+            return None
+          
     def generate_laby(self, posX, posY):
         self.grille[posY][posX].type = 'PATH'
-        if (posX, posY) == (self.width - 1, self.height - 1):
+        if (posX,posY)==(self.width-1, self.height-1):
             return
-        deltas = [(2, 0), (-2, 0), (0, 2), (0, -2)]
-        unvisited = [
-            d for d in deltas
-            if 0 <= posY + d[1] < self.height
-            and 0 <= posX + d[0] < self.width
-            and self.grille[posY + d[1]][posX + d[0]].type == 'WALL'
-            and self.grille[posY + d[1] // 2][posX + d[0] // 2].type != 'DRAWING'
-        ]
+        deltas = [(2,0),(-2,0),(0,2),(0,-2)]
+        unvisited = [delta for delta in deltas if 0<=posY+delta[1]<self.height and 0<=posX+delta[0]<self.width and self.grille[posY+delta[1]][posX+delta[0]].type=='WALL' and self.grille[posY+delta[1]//2][posX+delta[0]//2].type!='DRAWING']
         if unvisited:
-            for delta in sample(unvisited, randint(1, len(unvisited))):
-                if self.grille[posY + delta[1]][posX + delta[0]].type == 'WALL':
-                    self.grille[posY + delta[1] // 2][posX + delta[0] // 2].type = 'PATH'
-                    self.generate_laby(posX + delta[0], posY + delta[1])
+            unvisited_chosen = sample(unvisited, randint(1,len(unvisited)))
+            for delta_chosen in unvisited_chosen:
+                if self.grille[posY+delta_chosen[1]][posX+delta_chosen[0]].type == 'WALL':
+                    self.grille[posY + delta_chosen[1]//2][posX + delta_chosen[0]//2].type = 'PATH'
+                    self.generate_laby(posX+delta_chosen[0], posY+delta_chosen[1])
 
+    #index de 1 à width ou height
     def move_direction(self, direction, index):
         for _ in range(2):
             if direction == 'R':
-                x = abs(index)
-                if index < 0:
-                    row = self.grille[x][1:] + [self.grille[x][0]]
+                if index<0:
+                    x = -index
+                    row = self.grille[x][1:]+[self.grille[x][0]]
+                    self.grille[x] = row
                 else:
+                    x = index
                     row = [self.grille[x][-1]] + self.grille[x][:-1]
-                self.grille[x] = row
+                    self.grille[x] = row
                 for x_new, obj in enumerate(row):
                     obj.x = x_new
-            elif direction == 'C':
-                y = abs(index)
-                column = [row[y] for row in self.grille]
-                if index < 0:
-                    column = column[1:] + [column[0]]
+            elif direction=='C':
+                column = []
+                if index<0:
+                    y = -index
+                    for row in self.grille:
+                        column.append(row[y])
+                    column = column[1:]+[column[0]]
                 else:
+                    y = index
+                    for row in self.grille:
+                        column.append(row[y])
                     column = [column[-1]] + column[:-1]
+
                 for i, row in enumerate(self.grille):
                     row[y] = column[i]
+                    
                 for y_new, obj in enumerate(column):
                     obj.y = y_new
+        return
 
     def shuffle_laby(self, nbShuffles):
-        forbidden = None
+        movements = ['R','C']
+        forbidden = None #pour éviter d'annuler un mouvement
         for _ in range(nbShuffles):
             direction = sample(['R', 'C'], 1)[0]
-            index = randint(1, self.height - 2) if direction == 'R' else randint(1, self.width - 2)
+            if direction == 'R':
+                index = randint(1, self.height-2)
+            else:
+                index = randint(1, self.width-2)
             if index == forbidden:
                 index = -index
             self.move_direction(direction, index)
             forbidden = -index
-
+        return
+    #ne pas oublier de faire un deepcopy avant d'appeler la fonction
     def verificate_path(self, lig=0, col=0):
-        delta = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        delta = [(-1,0),(1,0),(0,-1),(0,1)]
+
         self.grille[lig][col].type = 'VISITED'
         nbChemins = 0
-        for dx, dy in delta:
-            x, y = lig + dx, col + dy
-            if 0 <= x < self.height and 0 <= y < self.width:
+        for dx,dy in delta:
+            x = lig + dx
+            y = col + dy
+            if 0<=x<self.height and 0<=y<self.width:
                 case = self.grille[x][y]
                 if case.type == 'FINISH':
                     nbChemins += 1
                 elif case.type == 'PATH':
-                    nbChemins += self.verificate_path(x, y)
+                    nbChemins += self.verificate_path(x,y)
         self.grille[lig][col].type = 'PATH'
         return nbChemins
+
+    def verificate_all_connected(self):
+        pass
+
 
 
 # Lance le menu → le joueur choisit taille et difficulté
