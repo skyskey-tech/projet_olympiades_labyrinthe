@@ -3,7 +3,7 @@ sys.setrecursionlimit(10000)
 
 from random import randint, sample
 from copy import deepcopy
-import timon
+import graphics
 from lib_pattern import pattern, patterns
 
 symbols = {'PATH': '.', 'WALL': '#', 'DRAWING': '%', 'START': 'S', 'FINISH': 'F', 'VISITED': 'o'}
@@ -145,4 +145,4 @@ class labyrinth:
 
 
 # Lance le menu → le joueur choisit taille et difficulté
-timon.launch_menu(labyrinth)
+graphics.launch_menu(labyrinth)
