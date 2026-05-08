@@ -1,12 +1,13 @@
 from PIL import Image, ImageTk
 import tkinter as tk
 from copy import deepcopy
+import sys
 
 # ── Palette ────────────────────────────────────────────────────────────────────
 PIL_COLORS = {
     'PATH':    (240, 230, 210),
     'WALL':    ( 40,  40,  40),
-    'DRAWING': ( 80, 120, 180),
+    'DRAWING': (56, 84, 126),
     'START':   ( 80, 200, 120),
     'FINISH':  (220,  80,  80),
     'VISITED': (180, 160, 230),
@@ -15,7 +16,7 @@ BG        = '#1a1a2e'
 ARROW_FG  = '#e94560'
 ARROW_HOV = '#ff8fa3'
 
-
+FONT_MONO = 'Courier New' if sys.platform != 'linux' else 'DejaVu Sans Mono'
 # ── Utilitaires image ──────────────────────────────────────────────────────────
 def laby_to_image(laby, cell_size=20):
     img = Image.new('RGB', (laby.width * cell_size, laby.height * cell_size))
@@ -41,10 +42,10 @@ def launch_menu(LabyClass):
 
     def lbl(parent, text, size=11, bold=False, color='#e0e0e0'):
         return tk.Label(parent, text=text,
-                        font=('Courier', size, 'bold' if bold else 'normal'),
+                        font=('FONT_MONO', size, 'bold' if bold else 'normal'),
                         fg=color, bg=BG)
 
-    def slider_row(parent, row, text, from_, to, init):
+    def slider_row(parent, row, text, from_, to, init, resolution=1):
         lbl(parent, text).grid(row=row, column=0, sticky='w', padx=(0, 16), pady=6)
         var = tk.IntVar(value=init)
         val_lbl = lbl(parent, str(init), bold=True, color=ARROW_FG)
@@ -52,7 +53,7 @@ def launch_menu(LabyClass):
 
         def update(v): val_lbl.config(text=v)
 
-        tk.Scale(parent, from_=from_, to=to, orient='horizontal',
+        tk.Scale(parent, from_=from_, resolution=resolution, to=to, orient='horizontal',
                  variable=var, showvalue=False, command=update,
                  length=280, sliderlength=18,
                  bg=BG, fg=ARROW_FG, activebackground=ARROW_HOV,
@@ -63,12 +64,12 @@ def launch_menu(LabyClass):
     frame = tk.Frame(menu, bg=BG, padx=30, pady=24)
     frame.pack()
 
-    lbl(frame, "L A B Y R I N T H E", size=20, bold=True,
+    lbl(frame, "T H E  S H I F T I N G  M A Z E", size=20, bold=True,
         color=ARROW_FG).grid(row=0, column=0, columnspan=3, pady=(0, 24))
 
     lbl(frame, "Taille", size=12, bold=True,
         color='#a0c4ff').grid(row=1, column=0, columnspan=3, sticky='w', pady=(0, 2))
-    size_var = slider_row(frame, 2, "Largeur / Hauteur", 11, 101, 31)
+    size_var = slider_row(frame, 2, "Largeur / Hauteur", 11, 101, 31, 2)
 
     lbl(frame, "Difficulté", size=12, bold=True,
         color='#a0c4ff').grid(row=3, column=0, columnspan=3, sticky='w', pady=(14, 2))
@@ -86,11 +87,11 @@ def launch_menu(LabyClass):
         launch_game(laby)
 
     tk.Button(frame, text="  Jouer  →  ", command=start,
-              font=('Courier', 13, 'bold'),
+              font=('FONT_MONO', 13, 'bold'),
               bg=ARROW_FG, fg='white',
               activebackground=ARROW_HOV, activeforeground='white',
               relief='flat', bd=0, padx=20, pady=10,
-              cursor='hand2').grid(row=5, column=0, columnspan=3, pady=(24, 0))
+              cursor='hand1').grid(row=5, column=0, columnspan=3, pady=(24, 0))
 
     menu.update_idletasks()
     menu.minsize(menu.winfo_reqwidth(), menu.winfo_reqheight())
@@ -108,7 +109,7 @@ def launch_game(laby):
 
     # Taille de cellule : on réserve de la place pour les flèches et l'UI
     # UI_H couvre : titre + pattern + compteur + message + boutons + paddings + barre de tâches + chrome fenêtre
-    UI_H      = 280
+    UI_H      = 700
     ARROW_EST = 24
     avail_w   = screen_w - 80  - 2 * ARROW_EST
     avail_h   = screen_h - UI_H - 2 * ARROW_EST
@@ -124,13 +125,13 @@ def launch_game(laby):
     wrap = tk.Frame(root, bg=BG)
     wrap.pack(padx=12, pady=10)
 
-    tk.Label(wrap, text="L A B Y R I N T H E",
-             font=('Courier', 14, 'bold'), fg=ARROW_FG, bg=BG).pack(pady=(0, 2))
+    tk.Label(wrap, text="T H E  S H I F T I N G  M A Z E",
+             font=('FONT_MONO', 14, 'bold'), fg=ARROW_FG, bg=BG).pack(pady=(0, 2))
 
     if laby.pattern_chosen:
         tk.Label(wrap,
                  text=f"✦  Motif cible : {laby.pattern_chosen.name.upper()}  ✦",
-                 font=('Courier', 9), fg='#a0c4ff', bg=BG).pack(pady=(0, 4))
+                 font=('FONT_MONO', 9), fg='#a0c4ff', bg=BG).pack(pady=(0, 4))
 
     # Canvas unique contenant labyrinthe + zones flèches
     canvas = tk.Canvas(wrap, width=cv_w, height=cv_h,
@@ -206,7 +207,8 @@ def launch_game(laby):
             x0, y0 = AZ, AZ + idx * CELL
             x1, y1 = x0 + maze_pw, y0 + CELL
         canvas.create_rectangle(x0, y0, x1, y1,
-                                fill='#e94560', stipple='gray25',
+                                fill='#e94560',
+                                stipple='gray25',
                                 outline='', tags='hl')
         canvas.tag_raise('arrow')
 
@@ -234,22 +236,20 @@ def launch_game(laby):
     info = tk.Frame(wrap, bg=BG)
     info.pack(pady=6)
     tk.Label(info, textvariable=moves_left,
-             font=('Courier', 18, 'bold'), fg=ARROW_FG, bg=BG).pack(side='left', padx=3)
-    tk.Label(info, text=' mouvements restants',
-             font=('Courier', 11), fg='#e0e0e0', bg=BG).pack(side='left')
+             font=('FONT_MONO', 11), fg='#e0e0e0', bg=BG).pack(side='left')
 
     tk.Label(wrap, textvariable=msg_var,
-             font=('Courier', 12, 'bold'), fg='#80ff80', bg=BG).pack()
+             font=('FONT_MONO', 12, 'bold'), fg='#80ff80', bg=BG).pack()
 
     btns = tk.Frame(wrap, bg=BG)
     btns.pack(pady=(4, 8))
 
     def mk_btn(text, cmd):
         b = tk.Button(btns, text=text, command=cmd,
-                      font=('Courier', 10, 'bold'),
+                      font=('FONT_MONO', 10, 'bold'),
                       bg='#16213e', fg='#e0e0e0',
                       activebackground=ARROW_FG, activeforeground='white',
-                      relief='flat', bd=0, padx=14, pady=6, cursor='hand2')
+                      relief='flat', bd=0, padx=14, pady=6, cursor='hand1')
         b.pack(side='left', padx=8)
         b.bind('<Enter>', lambda e: b.configure(bg=ARROW_FG, fg='white'))
         b.bind('<Leave>', lambda e: b.configure(bg='#16213e', fg='#e0e0e0'))
