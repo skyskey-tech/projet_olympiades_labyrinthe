@@ -43,8 +43,12 @@ class labyrinth:
         usable_patterns = [drawing for drawing in patterns if drawing.size<=max_size]
         if usable_patterns:
             pattern_chosen = sample(usable_patterns, 1)[0]
-            x_corner = randint(1, max(2,self.width-2-pattern_chosen.size))
-            y_corner = randint(1, max(2, self.height-2-pattern_chosen.size))
+            x_max = self.width - 1 - pattern_chosen.size
+            y_max = self.height - 1 - pattern_chosen.size
+            if x_max < 1 or y_max < 1:
+                return None
+            x_corner = randint(1, x_max)
+            y_corner = randint(1, y_max)
             symbols_inversed = {'#':'WALL', '%':'DRAWING'}
             for y, i in enumerate(pattern_chosen.drawing):
                 for x, j in enumerate(i):
