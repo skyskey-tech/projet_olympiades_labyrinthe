@@ -1,2 +1,2 @@
 Génération de labyrinthe et mélange
-Peut-être ajouter caches (motifs)
+Ajouter => trophées, débugger détection patterns, affichage patterns
