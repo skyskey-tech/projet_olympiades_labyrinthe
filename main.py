@@ -28,11 +28,15 @@ class labyrinth:
         self.width = width
         self.nbShuffles = level
         self.grille = [[cell(x, y, 'WALL') for x in range(width)] for y in range(height)]
+        copie = deepcopy(self.grille)
         self.pattern_chosen = None
         self.movements = []
-        if level >= 0 and randint(0, 2) == 0:
+        if level >= 10 and randint(0, 2) == 0:
             self.pattern_chosen = self.add_pattern()
-        self.generate_laby(0, 0)
+            copie = deepcopy(self.grille)
+        while self.verificate_path(deepcopy(self.grille),0, 0) <= 0:
+            self.grille = deepcopy(copie)
+            self.generate_laby(0, 0)
         self.grille[0][0].type, self.grille[height - 1][width - 1].type = ('START', 'FINISH')
         self.shuffle_laby(self.nbShuffles)
         while level > 0 and self.verificate_path(deepcopy(self.grille),0, 0) > 0:
@@ -113,9 +117,9 @@ class labyrinth:
         for _ in range(nbShuffles):
             direction = sample(['R', 'C'], 1)[0]
             if direction == 'R':
-                index = randint(1, self.height-2)
+                index = randint(1, self.height-2)*sample([-1, 1], 1)[0]
             else:
-                index = randint(1, self.width-2)
+                index = randint(1, self.width-2)*sample([-1, 1], 1)[0]
             if index == forbidden:
                 index = -index
             self.move_direction(direction, index)
@@ -136,7 +140,6 @@ class labyrinth:
                     nbChemins += 1
                 elif case.type == 'PATH':
                     nbChemins += self.verificate_path(grille,x,y)
-        grille[lig][col].type = 'PATH'
         return nbChemins
 
     def verificate_all_connected(self):
