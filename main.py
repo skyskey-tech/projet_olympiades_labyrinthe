@@ -136,7 +136,6 @@ class labyrinth:
                     nbChemins += 1
                 elif case.type == 'PATH':
                     nbChemins += self.verificate_path(grille,x,y)
-        grille[lig][col].type = 'PATH'
         return nbChemins
 
     def verificate_all_connected(self):
