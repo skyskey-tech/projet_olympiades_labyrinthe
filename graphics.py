@@ -326,7 +326,7 @@ def launch_game(laby, LabyClass):
         draw_maze()
         canvas.delete('hl')
         canvas.tag_raise('arrow')
-        if deepcopy(laby).verificate_path(0, 0) > 0:
+        if laby.verificate_path(deepcopy(laby.grille),0, 0) > 0:
             points, pattern_got = save_game(laby, moves_left.get())
             msg = f"✦  Bravo !  +{points} pts"
             if pattern_got:
