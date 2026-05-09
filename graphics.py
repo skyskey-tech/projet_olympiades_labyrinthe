@@ -196,6 +196,7 @@ def _retour_menu(root, LabyClass):
 
 # ── Jeu ────────────────────────────────────────────────────────────────────────
 def launch_game(laby, LabyClass):
+    won = False
     root = tk.Tk()
     root.title("Labyrinthe")
     root.configure(bg=BG)
@@ -317,6 +318,7 @@ def launch_game(laby, LabyClass):
     msg_var    = tk.StringVar()
 
     def do_move(direction, index):
+        nonlocal won
         if moves_left.get() <= 0:
             return
         laby.movements.append((direction, index))
@@ -326,7 +328,8 @@ def launch_game(laby, LabyClass):
         draw_maze()
         canvas.delete('hl')
         canvas.tag_raise('arrow')
-        if laby.verificate_path(deepcopy(laby.grille),0, 0) > 0:
+        if laby.verificate_path(deepcopy(laby.grille),0, 0) > 0 and not won:
+            won = True 
             points, pattern_got = save_game(laby, moves_left.get())
             msg = f"✦  Bravo !  +{points} pts"
             if pattern_got:

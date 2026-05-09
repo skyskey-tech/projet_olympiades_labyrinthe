@@ -10,14 +10,20 @@ def check_pattern(laby):
         for y_corner in range(1, laby.height - 1 - laby.pattern_chosen.size):
             for x_corner in range(1, laby.width - 1 - laby.pattern_chosen.size):
                 i, j = 0, 0
-                while laby.grille[y_corner+j][x_corner+i].type == symbols_inversed[laby.pattern_chosen.drawing[j][i]]:
-                    if (i, j) == (len(laby.pattern_chosen.drawing[0])-1, len(laby.pattern_chosen.drawing)-1):
-                        return laby.pattern_chosen.name
-                    if i == len(laby.pattern_chosen.drawing[0]):
-                        i=-1
-                        j += 1
+                found = True
+                while j<len(laby.pattern_chosen.drawing):
+                    if laby.grille[y_corner+j][x_corner+i].type != symbols_inversed[laby.pattern_chosen.drawing[j][i]]:
+                        found = False
+                        break
                     i+=1
-    return 
+
+                    if i == len(laby.pattern_chosen.drawing[0]):
+                        i=0
+                        j += 1
+
+                if found:
+                    return laby.pattern_chosen.name
+    return None
 
 def count_point(laby, pattern, moves_left):
     points = laby.width*0.5 * (laby.nbShuffles-moves_left)**2
