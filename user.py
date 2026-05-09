@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from symbols_lib import symbols_inversed
+from lib_pattern import patterns
 
 SAVE_FILE_PATH = Path.home() / '.shifting_maze_save.json'
 
@@ -30,7 +31,7 @@ def load_file():
         data = {
             'points':0,
             'trophees':[],
-            'patterns' : [],
+            'patterns' : {pattern.name:False for pattern in patterns},
             'nbLabys': 0
         }     
         with open(SAVE_FILE_PATH, 'w') as f:
@@ -49,7 +50,7 @@ def save_game(laby, moves_left):
     data = load_file()
     data['points']+= points
     if pattern != None and pattern not in data['patterns']:
-        data['patterns'].append(pattern)
+        data['patterns'][pattern] = True
     data['nbLabys'] += 1
     with open(SAVE_FILE_PATH, 'w') as f:
         json.dump(data, f, indent=2)

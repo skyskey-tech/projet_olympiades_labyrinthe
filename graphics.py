@@ -1,35 +1,13 @@
-from PIL import Image, ImageTk
+from PIL import ImageTk
 import tkinter as tk
 from copy import deepcopy
 import sys
 from user import save_game, load_file
-# ── Palette ────────────────────────────────────────────────────────────────────
-PIL_COLORS = {
-    'PATH':    (240, 230, 210),
-    'WALL':    ( 40,  40,  40),
-    'DRAWING': (56, 84, 126),
-    'START':   ( 80, 200, 120),
-    'FINISH':  (220,  80,  80),
-    'VISITED': (180, 160, 230),
-}
-BG        = '#1a1a2e'
-ARROW_FG  = '#e94560'
-ARROW_HOV = '#ff8fa3'
+from lib_pattern import patterns as all_patterns
+from picture import BG, ARROW_FG, ARROW_HOV, pattern_to_image, laby_to_image
+
 
 FONT_MONO = 'Courier New' if sys.platform != 'linux' else 'DejaVu Sans Mono'
-# ── Utilitaires image ──────────────────────────────────────────────────────────
-def laby_to_image(laby, cell_size=20):
-    img = Image.new('RGB', (laby.width * cell_size, laby.height * cell_size))
-    for row in laby.grille:
-        for c in row:
-            color = PIL_COLORS.get(c.type, (255, 0, 255))
-            img.paste(Image.new('RGB', (cell_size, cell_size), color),
-                      (c.x * cell_size, c.y * cell_size))
-    return img
-
-def save_image(laby, path, cell_size=20):
-    laby_to_image(laby, cell_size).save(path)
-    print(f'Image sauvegardée : {path}')
 
 
 # ── Menu de démarrage ──────────────────────────────────────────────────────────
@@ -38,8 +16,7 @@ def launch_menu(LabyClass):
     menu = tk.Tk()
     menu.title("Labyrinthe – Nouveau jeu")
     menu.configure(bg=BG)
-    menu.resizable(False, False)
-
+    menu.resizable(True, True)  # hauteur redimensionnable
     def lbl(parent, text, size=11, bold=False, color='#e0e0e0'):
         return tk.Label(parent, text=text,
                         font=(FONT_MONO, size, 'bold' if bold else 'normal'),
@@ -92,33 +69,110 @@ def launch_menu(LabyClass):
               activebackground=ARROW_HOV, activeforeground='white',
               relief='flat', bd=0, padx=20, pady=10,
               cursor='hand1').grid(row=5, column=0, columnspan=3, pady=(24, 0))
+    
+
+
+    # ── Scrollable container ─────────────────────────────────────────────
+    outer = tk.Frame(menu, bg=BG)
+    outer.pack(fill='both', expand=True)
+
+    scrollbar = tk.Scrollbar(outer, orient='vertical')
+    scrollbar.pack(side='right', fill='y')
+
+    canvas_scroll = tk.Canvas(outer, bg=BG, highlightthickness=0,
+                               yscrollcommand=scrollbar.set)
+    canvas_scroll.pack(side='left', fill='both', expand=True)
+    scrollbar.config(command=canvas_scroll.yview)
+
+    # Le vrai contenu va dans ce frame
+    frame = tk.Frame(canvas_scroll, bg=BG, padx=30, pady=24)
+    frame_id = canvas_scroll.create_window((0, 0), window=frame, anchor='nw')
+
+    # Ajuste la zone scrollable quand le contenu change de taille
+    def on_frame_configure(e):
+        canvas_scroll.configure(scrollregion=canvas_scroll.bbox('all'))
+
+    def on_canvas_configure(e):
+        canvas_scroll.itemconfig(frame_id, width=e.width)
+
+    frame.bind('<Configure>', on_frame_configure)
+    canvas_scroll.bind('<Configure>', on_canvas_configure)
+
+    # Scroll à la molette
+    def on_mousewheel(e):
+        canvas_scroll.yview_scroll(int(-1 * (e.delta / 120)), 'units')
+
+    def on_mousewheel_linux(e):
+        if e.num == 4:
+            canvas_scroll.yview_scroll(-1, 'units')
+        elif e.num == 5:
+            canvas_scroll.yview_scroll(1, 'units')
+
+    # Linux utilise Button-4/5 au lieu de MouseWheel
+    if sys.platform == 'linux':
+        canvas_scroll.bind_all('<Button-4>', on_mousewheel_linux)
+        canvas_scroll.bind_all('<Button-5>', on_mousewheel_linux)
+    else:
+        canvas_scroll.bind_all('<MouseWheel>', on_mousewheel)
+
+    # Stats sauvegardées
+    save_data = load_file()
+
+    lbl(frame, "Vos statistiques", size=12, bold=True,
+        color='#a0c4ff').grid(row=7, column=0, columnspan=3, pady=(16, 4))
+
+    lbl(frame, f"Points totaux : {save_data['points']}",
+        size=10, color='#a0c4ff').grid(row=8, column=0, columnspan=3, pady=(16, 0))
+
+    lbl(frame, f"Labyrinthes résolus : {save_data['nbLabys']}",
+        size=10, color='#a0c4ff').grid(row=9, column=0, columnspan=3, pady=(16, 0))
+    # ── Titre section patterns ───────────────────────────────────────────
+    lbl(frame, "Votre collection de patterns", size=12, bold=True,
+        color='#a0c4ff').grid(row=10, column=0, columnspan=3, pady=(16, 4))
+
+    # ── Grille des patterns ──────────────────────────────────────────────
+    patterns_frame = tk.Frame(frame, bg=BG)
+    patterns_frame.grid(row=11, column=0, columnspan=3, pady=(0, 8))
+
+
+    COLS = 4  # nombre de patterns par ligne
+    photos = []  # garder une référence sinon Python supprime l'image
+
+    for idx, p in enumerate(all_patterns):
+        col = idx % COLS
+        row = idx // COLS
+
+        cell_frame = tk.Frame(patterns_frame, bg='#16213e',
+                            highlightthickness=1, highlightbackground='#2a2a4a')
+        cell_frame.grid(row=row, column=col, padx=6, pady=6, ipadx=6, ipady=4)
+
+        discovered = save_data['patterns'].get(p.name, False)
+
+        if discovered:
+            img    = pattern_to_image(p)
+            photo  = ImageTk.PhotoImage(img)
+            photos.append(photo)  # indispensable pour éviter que Python supprime l'image
+            tk.Label(cell_frame, image=photo, bg='#16213e').pack(pady=(6, 2))
+            tk.Label(cell_frame, text=p.name,
+                    font=(FONT_MONO, 8, 'bold'), fg='#80ff80', bg='#16213e').pack(pady=(0, 4))
+        else:
+            tk.Label(cell_frame, text='???',
+                    font=(FONT_MONO, 12, 'bold'), fg='#444466', bg='#16213e').pack(padx=10, pady=(6, 0))
+            tk.Label(cell_frame, text=p.name,
+                    font=(FONT_MONO, 8), fg='#444466', bg='#16213e').pack(pady=(2, 6))
+
 
     tk.Button(frame, text="  Quitter ✕ ", command=menu.destroy,
               font=(FONT_MONO, 13, 'bold'),
               bg=ARROW_FG, fg='white',
               activebackground=ARROW_HOV, activeforeground='white',
               relief='flat', bd=0, padx=20, pady=10,
-              cursor='hand1').grid(row=5, column=2, columnspan=3, pady=(24, 0))
-    
-
-    # Stats sauvegardées
-    save_data = load_file()
-    lbl(frame, f"Points totaux : {save_data['points']}",
-        size=10, color='#a0c4ff').grid(row=7, column=0, columnspan=3, pady=(16, 0))
-
-    lbl(frame, f"Labyrinthes résolus : {save_data['nbLabys']}",
-        size=10, color='#a0c4ff').grid(row=8, column=0, columnspan=3, pady=(16, 0))
-
-    patterns_txt = ', '.join(save_data['patterns']) if save_data['patterns'] else 'Aucun'
-    lbl(frame, f"Motifs obtenus : {patterns_txt}",
-        size=10, color='#a0c4ff').grid(row=9, column=0, columnspan=3, pady=(4, 0))
-
-    trophees_txt = ', '.join(save_data['trophees']) if save_data['trophees'] else 'Aucun'
-    lbl(frame, f"Vos trophées : {trophees_txt}",
-        size=10, color='#a0c4ff').grid(row=10, column=0, columnspan=3, pady=(4, 0))
+              cursor='hand1').grid(row=12, column=0, columnspan=3, pady=(24, 0))
     
     menu.update_idletasks()
-    menu.minsize(menu.winfo_reqwidth(), menu.winfo_reqheight())
+
+    screen_h = menu.winfo_screenheight()
+    menu.geometry(f"{menu.winfo_reqwidth()}x{min(menu.winfo_reqheight(), int(screen_h * 0.85))}")
     menu.mainloop()
 
 def _retour_menu(root, LabyClass):
@@ -130,7 +184,7 @@ def _retour_menu(root, LabyClass):
     tk.Label(popup, text="✦  Félicitations !  ✦",
              font=(FONT_MONO, 16, 'bold'), fg='#80ff80', bg=BG).pack(padx=30, pady=(20, 8))
 
-    tk.Label(popup, text="Retour au menu dans 3 secondes…",
+    tk.Label(popup, text="Retour au menu dans 6 secondes…",
              font=(FONT_MONO, 10), fg='#e0e0e0', bg=BG).pack(pady=(0, 20))
 
     def go():
@@ -138,7 +192,7 @@ def _retour_menu(root, LabyClass):
         root.destroy()
         launch_menu(LabyClass)
 
-    popup.after(3000, go)
+    popup.after(6000, go)
 
 # ── Jeu ────────────────────────────────────────────────────────────────────────
 def launch_game(laby, LabyClass):
@@ -295,16 +349,6 @@ def launch_game(laby, LabyClass):
     btns = tk.Frame(wrap, bg=BG)
     btns.pack(pady=(4, 8))
 
-    def mk_btn(text, cmd):
-        b = tk.Button(btns, text=text, command=cmd,
-                      font=(FONT_MONO, 10, 'bold'),
-                      bg='#16213e', fg='#e0e0e0',
-                      activebackground=ARROW_FG, activeforeground='white',
-                      relief='flat', bd=0, padx=14, pady=6, cursor='hand1')
-        b.pack(side='left', padx=8)
-        b.bind('<Enter>', lambda e: b.configure(bg=ARROW_FG, fg='white'))
-        b.bind('<Leave>', lambda e: b.configure(bg='#16213e', fg='#e0e0e0'))
-
     def on_reset():
         laby.grille = deepcopy(laby.model)
         moves_left.set(laby.nbShuffles)
@@ -324,6 +368,17 @@ def launch_game(laby, LabyClass):
         draw_maze()
         canvas.delete('hl')
         canvas.tag_raise('arrow')
+
+
+    def mk_btn(text, cmd):
+        b = tk.Button(btns, text=text, command=cmd,
+                        font=(FONT_MONO, 10, 'bold'),
+                        bg='#16213e', fg='#e0e0e0',
+                        activebackground=ARROW_FG, activeforeground='white',
+                        relief='flat', bd=0, padx=14, pady=6, cursor='hand1')
+        b.pack(side='left', padx=8)
+        b.bind('<Enter>', lambda e: b.configure(bg=ARROW_FG, fg='white'))
+        b.bind('<Leave>', lambda e: b.configure(bg='#16213e', fg='#e0e0e0'))
 
     mk_btn("↺  Réinitialiser", on_reset)
     mk_btn("↶  Annuler", on_cancel)

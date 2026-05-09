@@ -35,7 +35,7 @@ class labyrinth:
         self.generate_laby(0, 0)
         self.grille[0][0].type, self.grille[height - 1][width - 1].type = ('START', 'FINISH')
         self.shuffle_laby(self.nbShuffles)
-        while level > 0 and deepcopy(self).verificate_path(0, 0) > 0:
+        while level > 0 and self.verificate_path(deepcopy(self.grille),0, 0) > 0:
             self.shuffle_laby(self.nbShuffles)
         self.model = deepcopy(self.grille) #ne pas toucher le modele ! Il servira pour la réinitialisation
 
@@ -122,21 +122,21 @@ class labyrinth:
             forbidden = -index
         return
     #ne pas oublier de faire un deepcopy avant d'appeler la fonction
-    def verificate_path(self, lig=0, col=0):
+    def verificate_path(self,grille, lig=0, col=0):
         delta = [(-1,0),(1,0),(0,-1),(0,1)]
 
-        self.grille[lig][col].type = 'VISITED'
+        grille[lig][col].type = 'VISITED'
         nbChemins = 0
         for dx,dy in delta:
             x = lig + dx
             y = col + dy
             if 0<=x<self.height and 0<=y<self.width:
-                case = self.grille[x][y]
+                case = grille[x][y]
                 if case.type == 'FINISH':
                     nbChemins += 1
                 elif case.type == 'PATH':
-                    nbChemins += self.verificate_path(x,y)
-        self.grille[lig][col].type = 'PATH'
+                    nbChemins += self.verificate_path(grille,x,y)
+        grille[lig][col].type = 'PATH'
         return nbChemins
 
     def verificate_all_connected(self):
