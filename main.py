@@ -5,8 +5,8 @@ from random import randint, sample
 from copy import deepcopy
 import graphics
 from lib_pattern import pattern, patterns
+from symbols_lib import symbols, symbols_inversed
 
-symbols = {'PATH': '.', 'WALL': '#', 'DRAWING': '%', 'START': 'S', 'FINISH': 'F', 'VISITED': 'o'}
 
 
 class cell:
@@ -53,7 +53,6 @@ class labyrinth:
                 return None
             x_corner = randint(1, x_max)
             y_corner = randint(1, y_max)
-            symbols_inversed = {'#':'WALL', '%':'DRAWING'}
             for y, i in enumerate(pattern_chosen.drawing):
                 for x, j in enumerate(i):
                     self.grille[y_corner+y][x_corner+x].type = symbols_inversed[j]

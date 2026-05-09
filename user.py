@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from symbols_lib import symbols_inversed
 
 SAVE_FILE_PATH = Path.home() / '.shifting_maze_save.json'
 
@@ -8,8 +9,8 @@ def check_pattern(laby):
         for y_corner in range(1, laby.height - 1 - laby.pattern_chosen.size):
             for x_corner in range(1, laby.width - 1 - laby.pattern_chosen.size):
                 i, j = 0, 0
-                while laby.grille[y_corner+j][x_corner+i] == laby.pattern_chosen.drawing[j][i]:
-                    if (i, j) == (len(laby.pattern_chosen.drawing[0])-1, len(laby.pattern_chosen.drawing))-1:
+                while laby.grille[y_corner+j][x_corner+i].type == symbols_inversed[laby.pattern_chosen.drawing[j][i]]:
+                    if (i, j) == (len(laby.pattern_chosen.drawing[0])-1, len(laby.pattern_chosen.drawing)-1):
                         return laby.pattern_chosen.name
                     if i == len(laby.pattern_chosen.drawing[0]):
                         i=-1
