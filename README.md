@@ -63,11 +63,11 @@ python3 main.py
 ```
 
 ## Téléchargement (Windows)
-Pour les utilisateurs Windows qui ne possèdent pas Python, vous pouvez télécharger la version prête à l'emploi dans l'onglet [Releases](lien-vers-tes-releases).
+Pour les utilisateurs Windows qui ne possèdent pas Python, vous pouvez télécharger la version prête à l'emploi dans l'onglet [Releases](https://github.com/skyskey-tech/projet_olympiades_labyrinthe/releases/tag/v1.0.0). L'exécutable n'est pas signé : cliquez sur "Informations complémentaires" puis "Exécuter quand même" au premier lancement.
 
 ## Illustrations
 ![Illustration game](https://github.com/skyskey-tech/projet_olympiades_labyrinthe/blob/main/images/illustration_game.png?raw=True)
-Illustration du menu
+Illustration du jeu
 
 ![Illustration game](https://github.com/skyskey-tech/projet_olympiades_labyrinthe/blob/main/images/illustration_menu.png?raw=True)
-Illustration du jeu
+Illustration du menu
