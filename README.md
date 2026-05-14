@@ -66,5 +66,5 @@ python3 main.py
 ![Illustration game](https://github.com/skyskey-tech/projet_olympiades_labyrinthe/blob/main/images/illustration_game.png?raw=True)
 Illustration du menu
 
-![Illustration game](https://github.com/skyskey-tech/projet_olympiades_labyrinthe/blob/main/images/illustration_game.png?raw=True)
+![Illustration game](https://github.com/skyskey-tech/projet_olympiades_labyrinthe/blob/main/images/illustration_menu.png?raw=True)
 Illustration du jeu
