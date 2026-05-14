@@ -62,6 +62,9 @@ pip install Pillow
 python3 main.py
 ```
 
+## Téléchargement (Windows)
+Pour les utilisateurs Windows qui ne possèdent pas Python, vous pouvez télécharger la version prête à l'emploi dans l'onglet [Releases](lien-vers-tes-releases).
+
 ## Illustrations
 ![Illustration game](https://github.com/skyskey-tech/projet_olympiades_labyrinthe/blob/main/images/illustration_game.png?raw=True)
 Illustration du menu
