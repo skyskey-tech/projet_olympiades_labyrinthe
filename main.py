@@ -145,3 +145,4 @@ class labyrinth:
 
 # Lance le menu → le joueur choisit taille et difficulté
 graphics.launch_menu(labyrinth)
+    
