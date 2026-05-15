@@ -4,6 +4,14 @@
 
 ---
 
+## Licence
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+Ce projet est distribué sous la licence **MIT**.
+
+--- 
+
 ## Règles du Jeu
 
 L'objectif principal est de reconstituer un chemin continu entre le point de départ et le point d'arrivée.
@@ -63,7 +71,9 @@ python3 main.py
 ```
 
 ## Téléchargement (Windows)
-Pour les utilisateurs Windows qui ne possèdent pas Python, vous pouvez télécharger la version prête à l'emploi dans l'onglet [Releases](https://github.com/skyskey-tech/projet_olympiades_labyrinthe/releases). L'exécutable n'est pas signé : cliquez sur "Informations complémentaires" puis "Exécuter quand même" au premier lancement.
+Pour les utilisateurs Windows, préférez télécharger la version prête à l'emploi dans l'onglet [Releases](https://github.com/skyskey-tech/projet_olympiades_labyrinthe/releases). L'exécutable n'est pas signé : cliquez sur "Informations complémentaires" puis "Exécuter quand même" au premier lancement.
+
+---
 
 ## Illustrations
 
